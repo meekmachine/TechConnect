@@ -1,2 +1,2 @@
 # TechConnect
-AN app for finding resources for STEM students.
+An app for finding resources for STEM students.
