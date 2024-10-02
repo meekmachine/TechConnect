@@ -1,0 +1,311 @@
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #e4ffc9;
+  color: #444c3c;
+}
+.btn-bgn {
+  background-image: linear-gradient(to bottom, #5a684b, #7d9169);
+  color: #fff;
+}
+.tablePosts thead tr {
+  color: #fff;
+  font-weight: normal;
+}
+.tablePosts th {
+  border-top: 0;
+  padding: 0.5rem;
+}
+.tablePosts tr {
+  border-top-color: #ffffff;
+  border-bottom-color: #608f00;
+  color: #444c3c;
+  border-top: 1px solid transparent;
+  border-top-color: transparent;
+  border-bottom: 1px solid green;
+  border-bottom-color: green;
+}
+.tablePosts td {
+  border-top: 0;
+  padding: 0.75rem;
+  vertical-align: middle;
+}
+.tablePosts tbody tr.alt1:hover,
+tr.alt2:hover {
+  background-color: #f6f4d0;
+}
+
+.tablePosts td .material-icons {
+  /* I hope this holds. The account_circle icon is not centered? */
+  margin-left: 4px;
+}
+
+.table a {
+  color: #444c3c;
+}
+.table a {
+  font-weight: bold;
+}
+.table a:hover {
+  color: #000000;
+}
+
+.tablePosts {
+  background-color: #59674b;
+  background-image: linear-gradient(
+    to bottom,
+    #b5c1a9 0%,
+    #7f936b 2px,
+    #59674b 100%
+  );
+  background-repeat: repeat-x;
+}
+.tablePosts {
+  margin-bottom: 4px;
+  padding: 5px;
+  clear: both;
+  border-radius: 7px;
+}
+
+.postTitle:hover {
+  text-decoration: underline;
+  text-decoration-line: underline;
+  text-decoration-style: solid;
+  text-decoration-color: currentcolor;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+    monospace;
+}
+
+/* PostList component*/
+.alt1 {
+  background: #e0edd3;
+}
+.alt2 {
+  background: #ffffff;
+}
+.profilePic {
+  position: relative;
+  display: inline-block;
+  background-repeat: no-repeat;
+  width: 40px;
+  height: 40px;
+  background-size: 40px;
+  border-radius: 20px;
+  margin-left: 10px;
+  margin-right: auto;
+  vertical-align: text-top;
+  padding: 0.5rem;
+}
+
+/* Navbar component */
+.navbar {
+  background-image: linear-gradient(to bottom, #5a684b, #7d9169);
+}
+
+.navbar #account_circle {
+  vertical-align: middle;
+  margin: 2px;
+}
+.navbar #user-container {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  right: 0;
+  padding-left: 10px;
+  justify-content: flex-end;
+  padding-right: 10px;
+}
+.navbar #user-container #user-pic {
+  position: relative;
+  display: inline-block;
+  background-image: url("/images/profile_placeholder.png");
+  background-repeat: no-repeat;
+  width: 40px;
+  height: 40px;
+  background-size: 40px;
+  border-radius: 20px;
+}
+.navbar #user-container #user-name {
+  font-size: 16px;
+  line-height: 1.5;
+  padding-right: 10px;
+  padding-left: 20px;
+  color: #fff;
+  font-family: inherit;
+}
+.navbar #user-container #sign-out {
+  font-size: 16px;
+  color: #fff;
+  font-family: inherit;
+  background-color: transparent;
+  border-color: transparent;
+}
+
+/* Comment component*/
+.commentpage {
+  background: #ffffff;
+  background-color: rgb(255, 255, 255);
+  background-position-x: 0%;
+  background-position-y: 0%;
+  background-repeat: repeat;
+  background-attachment: scroll;
+  background-image: none;
+  background-size: auto;
+  background-origin: padding-box;
+  background-clip: border-box;
+  border: 1px solid #000000;
+  overflow: hidden;
+  display: block;
+}
+.commentpage .postRichText {
+  overflow: auto;
+  max-width: 1196px;
+  max-height: 806px;
+}
+.commentpage .tborder {
+  background: #ffffff;
+  background-color: rgb(255, 255, 255);
+  background-position-x: 0%;
+  background-position-y: 0%;
+  background-repeat: repeat;
+  background-attachment: scroll;
+  background-image: none;
+  background-size: auto;
+  background-origin: padding-box;
+  background-clip: border-box;
+  border: 1px solid #000000;
+}
+.commentpage th.thead,
+div.thead {
+  padding: 4px;
+}
+.commentpage .thead {
+  background-image: linear-gradient(to bottom, #90aa75, #c4dcab);
+  font-size: 11px;
+  font-weight: bold;
+}
+.commentpage .alt1 {
+  background: #e0edd3;
+  color: #444c3c;
+  font-size: 10pt;
+  padding: 3px;
+  border: 1px solid #dee2e6;
+  border-bottom: hidden;
+}
+.commentpage .alt2 {
+  background: #f6f4d0;
+  color: #444c3c;
+  font-size: 10pt;
+  padding: 3px;
+  border: 1px solid #dee2e6;
+  border-bottom: hidden;
+}
+.commentpage td {
+  border: 1px solid #f6f4d0;
+  border-top-color: rgb(255, 255, 255);
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-bottom-color: rgb(255, 255, 255);
+  border-bottom-style: solid;
+  border-bottom-width: 1px;
+  border-top: 0px;
+  border-bottom: 0px;
+}
+.commentpage .postmenu {
+  padding-top: 2px;
+  text-align: right;
+  vertical-align: bottom;
+}
+.commentpage .postmenu > a {
+  /*padding: 0 3px 2px;*/
+  color: #848d95;
+  vertical-align: bottom;
+}
+
+.commentpage .link-button {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  display: inline;
+  margin: 0;
+  padding: 0;
+  font-family: inherit;
+  line-height: inherit;
+  color: rgb(132, 141, 149);
+}
+
+.commentpage .link-button:hover {
+  text-decoration: underline;
+}
+
+.commentpage .profilePic {
+  top: 13px;
+}
+
+.commentpage .relative {
+  position: relative;
+}
+.commentpage .bottom-right {
+  /*position: absolute;*/
+  bottom: 0;
+  right: 0;
+  text-align: right;
+  vertical-align: bottom;
+}
+.spinner {
+  position: absolute;
+  top: calc(50% - 4em);
+  left: calc(50% - 4em);
+  width: 6em;
+  height: 6em;
+  border: 1.1em solid rgba(0, 0, 0, 0.2);
+  border-left: 1.1em solid #000000;
+  border-radius: 50%;
+  animation: load8 1.1s infinite linear;
+}
+@keyframes load8 {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Create and Edit component */
+.form-control {
+  background: #f6f4d0;
+}
+
+/* Pagination */
+.pagination .pagination-wrapper {
+  overflow-x:auto;
+}
+
+.pagination {
+  justify-content: center;
+  margin:30px;
+}
+.pagination li a {
+  background-color: #e0edd3;
+  font-weight: normal;
+  color: #444c3c;
+}
+
+.page-item.disabled .page-link {
+  background-color: #e0edd3;
+  font-weight: normal;
+}
+
+.page-item.active .page-link {
+  background-color: #59674b;
+  font-weight: bold;
+}
