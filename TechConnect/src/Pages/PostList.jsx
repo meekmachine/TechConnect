@@ -23,7 +23,7 @@ class PostList extends Component {
       const pagesCount = Math.ceil(snap.size / PAGE_SIZE);
       this.setState({ currentPage: 0 });
       this.pagesCount = pagesCount;
-    });
+    }, this.handleFirestoreError); // Add error handling for Firestore snapshot query
   }
 
   componentDidUpdate(_, prevState) {
@@ -37,12 +37,14 @@ class PostList extends Component {
       this.unsubscribe = fire_posts
         .orderBy(sortBy, direction)
         .limit((currentPage + 1) * PAGE_SIZE)
-        .onSnapshot(this.onPostsCollectionUpdate);
+        .onSnapshot(this.onPostsCollectionUpdate, this.handleFirestoreError); // Add error handling for Firestore subscription
     }
   }
 
   componentWillUnmount() {
-    this.unsubscribe();
+    if (this.unsubscribe) {
+      this.unsubscribe(); // Unsubscribe from Firestore updates
+    }
   }
 
   onPostsCollectionUpdate = (querySnapshot) => {
@@ -60,6 +62,11 @@ class PostList extends Component {
   handlePageClick = (event, page) => {
     event.preventDefault();
     this.setState({ isLoading: true, currentPage: page });
+  };
+
+  handleFirestoreError = (error) => {
+    console.error("Firestore error:", error); // Log Firestore errors for debugging
+    this.setState({ isLoading: false });
   };
 
   renderSortingIndicator = (targetName) => {
