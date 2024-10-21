@@ -12,68 +12,53 @@ import {
 
 class Create extends Component {
   state = {
-    title: "",
-    post_key: ""
+    title: "Debugging Post Title", // Set a default title for debugging
+    post_key: "",
+    fire_post: null,
   };
-  fire_post = getPostReference();
+
   refEditor = React.createRef();
-  initialRichText = ""; // this is rich text (I mean a string with HTML code)
+  initialRichText = "Debugging post content"; // Default rich text content for debugging
 
-  componentDidMount() {
-    //Create a reference to a new unsaved Post
-    this.setState({ ...this.stat, post_key: this.fire_post.id });
-  }
-  // Change title
-  onChangeTitle = e => {
-    this.setState({ ...this.state, [e.target.name]: e.target.value });
-  };
-
-  onSubmit = e => {
-    // Get the rich text (I mean a string with HTML code) from the reference to TextEditor
-    var richText = this.refEditor.current.state.valueHtml;
-    var plainText = this.refEditor.current.state.plainText;
-    const { title } = this.state;
-    if (title === "") {
-      alert("Title cannot be empty");
-      e.preventDefault();
-      return;
-    }
-    if (plainText === "" || richText === "") {
-      alert("Text cannot be empty");
-      e.preventDefault();
-      return;
-    }
-    // Send to Firebase
-    e.preventDefault();
-    var author = getUserName();
-    var profilePicUrl = getProfilePicUrl();
-    const timestamp = getServerTimestamp();
-    const data_post = {
-      author: author,
-      comments: 1,
-      plainText: plainText,
-      profilePicUrl: profilePicUrl,
-      status: "open",
-      title: title,
-      lastEdit: timestamp,
-      timestamp: timestamp
-    };
-    const onSuccessfullySetDocument = () => {
-      // Get document with all comments, push new comment
-      var data_comment = {
+  async componentDidMount() {
+    try {
+      // Get a new post reference with an auto-generated key
+      const fire_post = await getPostReference();
+      this.setState({ post_key: fire_post.id, fire_post });
+      
+      // Automatically save a post when component mounts (for debugging)
+      const author = getUserName();
+      const profilePicUrl = getProfilePicUrl();
+      const timestamp = getServerTimestamp();
+      const data_post = {
         author: author,
-        profilePicUrl: getProfilePicUrl(),
-        plainText: plainText,
-        richText: richText,
+        comments: 1,
+        plainText: this.initialRichText,
+        profilePicUrl: profilePicUrl,
+        status: "open",
+        title: this.state.title,
         lastEdit: timestamp,
         timestamp: timestamp
       };
-      pushComment(this.state.post_key, 1, data_comment, () => {
-        // Go back to post
-        this.props.history.push("/post/" + this.state.post_key);
-      });
-    };
-    setPostReference(this.fire_post, data_post, onSuccessfullySetDocument);
+
+      const onSuccessfullySetDocument = () => {
+        console.log("Post created successfully: ", this.state.post_key);
+      };
+
+      // Save the post to Firebase
+      setPostReference(fire_post, data_post, onSuccessfullySetDocument);
+    } catch (error) {
+      console.error("Error during post creation:", error);
+    }
+  }
+
+  onChangeTitle = (e) => {
+    this.setState({ [e.target.name]: e.target.value });
+  };
+
+  onSubmit = (e) => {
+    e.preventDefault();
+    // The manual submit logic if needed in addition to automatic save
   };
 
   render() {

@@ -1,6 +1,7 @@
 import { auth, db, storage } from "../Firebase"; // Import initialized services from config
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import { collection, doc, getDoc, setDoc, updateDoc, getDocs, query, serverTimestamp } from "firebase/firestore";
+import { collection, doc, getDoc, setDoc, updateDoc, getDocs, query, serverTimestamp, addDoc } from "firebase/firestore";
+import { GoogleAuthProvider, signInWithPopup, signOut as firebaseSignOut } from "firebase/auth";
 
 /**
  * Cloud Storage
@@ -93,15 +94,27 @@ export const getServerTimestamp = () => {
  * Signs-in using popup auth and Google as the identity provider
  */
 export const signIn = () => {
-  const provider = new auth.GoogleAuthProvider();
-  return auth.signInWithPopup(provider);
+  const provider = new GoogleAuthProvider(); // Firebase v9: GoogleAuthProvider is imported from firebase/auth
+  return signInWithPopup(auth, provider)     // Firebase v9: signInWithPopup is imported from firebase/auth
+    .then((result) => {
+      console.log("User signed in: ", result.user);
+    })
+    .catch((error) => {
+      console.error("Error during sign-in: ", error);
+    });
 };
 
 /**
  * Signs-out of Firebase.
  */
 export const signOut = () => {
-  return auth.signOut();
+  return firebaseSignOut(auth)               // Firebase v9: signOut is imported from firebase/auth
+    .then(() => {
+      console.log("User signed out.");
+    })
+    .catch((error) => {
+      console.error("Error signing out: ", error);
+    });
 };
 
 /**
@@ -116,6 +129,7 @@ export const postQuerySnapshot = async (onSnapshot) => {
   try {
     const q = query(fire_posts);
     const snapshot = await getDocs(q);
+    console.log("Number of posts fetched:", snapshot.size); // Debug log
     onSnapshot(snapshot);
   } catch (error) {
     console.error("Error getting post snapshot:", error);
@@ -136,11 +150,33 @@ export const getPostReference = () => {
 
 /**
  * Save or update a document in the specified collection
+ * @param {string|null} post_key - The document ID for the post. If null, Firestore generates a new one.
+ * @param {object} data_post - The data to save to the post.
+ * @param {function} onSetDocument - Optional callback on success.
  */
-export const setPostReference = async (fire_post, data_post, onSetDocument = () => {}) => {
+export const setPostReference = async (post_key = null, data_post, onSetDocument = () => {}) => {
   try {
-    await setDoc(fire_post, data_post);
-    onSetDocument();
+    let fire_post;
+
+    if (post_key) {
+      // If post_key is provided, reference the existing post
+      fire_post = doc(fire_posts, post_key);
+      console.log(`Updating existing post with ID: ${post_key}`);
+      await setDoc(fire_post, {
+        ...data_post,
+        timestamp: serverTimestamp(), // Add a server timestamp
+      });
+    } else {
+      // If no post_key is provided, use addDoc to create a new document with an auto-generated ID
+      console.log("Creating new post with auto-generated ID");
+      fire_post = await addDoc(fire_posts, {
+        ...data_post,
+        timestamp: serverTimestamp(), // Add a server timestamp
+      });
+    }
+
+    console.log("Post saved successfully with ID:", fire_post.id);
+    onSetDocument(fire_post.id); // Call the callback with the document ID
   } catch (error) {
     console.error("Error setting post reference:", error);
   }

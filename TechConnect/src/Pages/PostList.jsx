@@ -18,6 +18,7 @@ class PostList extends Component {
 
   pagesCount = 0;
 
+
   componentDidMount() {
     postQuerySnapshot((snap) => {
       const pagesCount = Math.ceil(snap.size / PAGE_SIZE);
