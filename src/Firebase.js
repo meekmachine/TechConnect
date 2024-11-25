@@ -5,13 +5,13 @@ import { getStorage } from "firebase/storage";
 
 // Firebase configuration
 const config = {
-  apiKey: "AIzaSyANVxg0hxd7aS9EC-D0hIODDKsiyc19zSc",
-  authDomain: "techx-68403.firebaseapp.com",
-  projectId: "techx-68403",
-  storageBucket: "techx-68403.appspot.com",
-  messagingSenderId: "146026279403",
-  appId: "1:146026279403:web:d8ec3f93f301f480f4e9ae",
-  measurementId: "G-CK6ZNXK48T"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
 // Initialize Firebase
@@ -31,4 +31,12 @@ export default {
   db,
   auth,
   storage,
+};
+
+// src/Firebase.js - Add this function
+export const checkFirebaseInitialization = () => {
+  if (!firebaseApp) {
+    throw new Error('Firebase not initialized');
+  }
+  return true;
 };

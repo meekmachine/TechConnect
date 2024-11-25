@@ -88,12 +88,12 @@ export const truncate = (text, limit) => {
  */
 export const getDateObject = (firebaseTimeStamp) => {
   if (!firebaseTimeStamp) {
-    //console.error("Could not find firebaseTimeStamp for post");
     return "";
   }
-  var dateObj = firebaseTimeStamp.toDate();
-  return new Date(dateObj.getTime() + dateObj.getTimezoneOffset() * 60000);
-}
+  // Convert Firebase timestamp to JavaScript Date
+  return firebaseTimeStamp.toDate();
+};
+
 /**
  * Print a Date object to DD-MM-YYY HH:MM
  *
@@ -108,7 +108,7 @@ export const getDateTime = (dateObj) => {
   return (
     pad(dateObj.getDate()) +
     "-" +
-    pad(dateObj.getMonth()) +
+    pad(dateObj.getMonth() + 1) + // Add 1 to month since it's 0-based
     "-" +
     dateObj.getFullYear() +
     " " +
@@ -116,7 +116,8 @@ export const getDateTime = (dateObj) => {
     ":" +
     pad(dateObj.getMinutes())
   );
-}
+};
+
 /**
  * Print a string with the time difference between the input Date and now
  *
@@ -132,7 +133,7 @@ export const timeDifference = (previous) => {
   var msPerMonth = msPerDay * 30;
   var msPerYear = msPerDay * 365;
   const current = Date.now();
-  var elapsed = current - previous;
+  var elapsed = current - previous.getTime();
   if (elapsed < msPerMinute) {
     return Math.round(elapsed / 1000) + " seconds ago";
   } else if (elapsed < msPerHour) {
@@ -151,11 +152,7 @@ export const timeDifference = (previous) => {
     return Math.round(elapsed / msPerMonth) + " month ago";
   } else if (elapsed < msPerYear) {
     return Math.round(elapsed / msPerMonth) + " months ago";
-  } /*else if (elapsed < msPerYear * 2) {
-    return Math.round(elapsed / msPerYear) + " year ago";
   } else {
-    return Math.round(elapsed / msPerYear) + " years ago";
-  }*/ else {
-    return this.getDateTime(previous);
+    return getDateTime(previous);
   }
-}
+};

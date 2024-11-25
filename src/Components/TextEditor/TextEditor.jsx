@@ -1,4 +1,4 @@
-import React, { useState, forwardRef } from "react";
+import React, { useState, forwardRef, useImperativeHandle } from "react";
 import { Progress } from "reactstrap";
 import { uploadToStorage } from "../../Scripts/firebase";
 import { TextArea, EditorContainer, Toolbar } from "./StyledComponents";
@@ -7,6 +7,12 @@ import "./TextEditor.css";
 const TextEditor = forwardRef(({ initialText = "", postKey }, ref) => {
   const [value, setValue] = useState(initialText);
   const [uploadProgress, setUploadProgress] = useState(100);
+
+  // Expose methods to parent component
+  useImperativeHandle(ref, () => ({
+    getValue: () => value,
+    setValue: (newValue) => setValue(newValue)
+  }));
 
   // Handle text input changes
   const handleChange = (event) => {
@@ -47,9 +53,8 @@ const TextEditor = forwardRef(({ initialText = "", postKey }, ref) => {
       <TextArea>
         <textarea
           value={value}
-          onChange={handleChange}
+          onChange={(e) => setValue(e.target.value)}
           placeholder="Type something..."
-          ref={ref}
           rows="10"
           style={{ width: "100%", padding: "10px", fontSize: "16px", fontFamily: "Arial" }}
         />

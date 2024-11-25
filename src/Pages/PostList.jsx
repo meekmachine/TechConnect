@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import Pagination from "../Components/Pagination";
 import { truncate, getDateObject, getDateTime, timeDifference } from "../Scripts/utilities";
 import { fire_posts, profilePicStyle, postQuerySnapshot } from "../Scripts/firebase";  // Correct import
+import { query, orderBy, limit, onSnapshot } from 'firebase/firestore';
 
 const TRUNCATION_LIMIT = 290;
 const PAGE_SIZE = 20;
@@ -20,11 +21,32 @@ class PostList extends Component {
 
 
   componentDidMount() {
-    postQuerySnapshot((snap) => {
-      const pagesCount = Math.ceil(snap.size / PAGE_SIZE);
-      this.setState({ currentPage: 0 });
-      this.pagesCount = pagesCount;
-    }, this.handleFirestoreError); // Add error handling for Firestore snapshot query
+    const { sortBy, direction } = this.state;
+    
+    // Create initial query
+    const q = query(
+      fire_posts,
+      orderBy(sortBy, direction),
+      limit(PAGE_SIZE)
+    );
+
+    // Set up initial snapshot listener
+    this.unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const posts = [];
+        snapshot.forEach((doc) => {
+          posts.push({ ...doc.data(), key: doc.id });
+        });
+        this.setState({ 
+          posts,
+          isLoading: false,
+          currentPage: 0,
+          pagesCount: Math.ceil(snapshot.size / PAGE_SIZE)
+        });
+      },
+      this.handleFirestoreError
+    );
   }
 
   componentDidUpdate(_, prevState) {
@@ -35,10 +57,19 @@ class PostList extends Component {
       direction !== prevState.direction ||
       currentPage !== prevState.currentPage
     ) {
-      this.unsubscribe = fire_posts
-        .orderBy(sortBy, direction)
-        .limit((currentPage + 1) * PAGE_SIZE)
-        .onSnapshot(this.onPostsCollectionUpdate, this.handleFirestoreError); // Add error handling for Firestore subscription
+      // Create a proper query
+      const q = query(
+        fire_posts,
+        orderBy(sortBy, direction),
+        limit((currentPage + 1) * PAGE_SIZE)
+      );
+
+      // Set up the snapshot listener
+      this.unsubscribe = onSnapshot(
+        q,
+        this.onPostsCollectionUpdate,
+        this.handleFirestoreError
+      );
     }
   }
 
@@ -49,7 +80,10 @@ class PostList extends Component {
   }
 
   onPostsCollectionUpdate = (querySnapshot) => {
-    const posts = querySnapshot.docs.map((doc) => ({ ...doc.data(), key: doc.id }));
+    const posts = [];
+    querySnapshot.forEach((doc) => {
+      posts.push({ ...doc.data(), key: doc.id });
+    });
     this.setState({ posts, isLoading: false });
   };
 
