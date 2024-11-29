@@ -144,7 +144,11 @@ export const fire_comments = collection(db, "comments");
 /**
  * Get a reference to a post document
  */
-export const getPostReference = () => {
+export const getPostReference = (postId = null) => {
+  if (postId) {
+    return doc(fire_posts, postId);
+  }
+  // Return a new document reference with auto-generated ID
   return doc(fire_posts);
 };
 
@@ -159,26 +163,23 @@ export const setPostReference = async (post_key = null, data_post, onSetDocument
     let fire_post;
 
     if (post_key) {
-      // If post_key is provided, reference the existing post
       fire_post = doc(fire_posts, post_key);
-      console.log(`Updating existing post with ID: ${post_key}`);
       await setDoc(fire_post, {
         ...data_post,
-        timestamp: serverTimestamp(), // Add a server timestamp
+        timestamp: serverTimestamp(),
       });
     } else {
-      // If no post_key is provided, use addDoc to create a new document with an auto-generated ID
-      console.log("Creating new post with auto-generated ID");
       fire_post = await addDoc(fire_posts, {
         ...data_post,
-        timestamp: serverTimestamp(), // Add a server timestamp
+        timestamp: serverTimestamp(),
       });
     }
 
-    console.log("Post saved successfully with ID:", fire_post.id);
-    onSetDocument(fire_post.id); // Call the callback with the document ID
+    onSetDocument(fire_post.id);
+    return fire_post.id;
   } catch (error) {
     console.error("Error setting post reference:", error);
+    throw error;
   }
 };
 
