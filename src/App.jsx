@@ -38,7 +38,7 @@ export default class App extends Component {
     }
 
     return (
-      <BrowserRouter>
+      <BrowserRouter basename="/TechConnect">
         <div>
           <Navbar />
           <main className="mdl-layout__content mdl-color--grey-100">

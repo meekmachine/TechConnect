@@ -2,6 +2,9 @@
   "name": "TechConnect",
   "private": true,
   "version": "0.0.0",
+  "homepage": "https://meekmachine.github.io/TechConnect",
+  "repository": "https://github.com/meekmachine/TechConnect.git",
+
   "scripts": {
     "dev": "vite",
     "build": "vite build",
