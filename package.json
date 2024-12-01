@@ -4,7 +4,6 @@
   "version": "0.0.0",
   "homepage": "https://meekmachine.github.io/TechConnect",
   "repository": "https://github.com/meekmachine/TechConnect.git",
-
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -23,6 +22,7 @@
     "is-url": "^1.2.4",
     "material-icons-react": "^1.0.7",
     "react": "^18.3.1",
+    "react-bootstrap": "^2.10.6",
     "react-dom": "^18.3.1",
     "react-firebase-file-uploader": "^2.5.0",
     "react-router-dom": "^6.15.0",

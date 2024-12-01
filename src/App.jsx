@@ -5,7 +5,9 @@ import Dashboard from "./Pages/Dashboard";
 import Login from "./Pages/Login";
 import Edit from "./Components/Edit";
 import Create from "./Pages/Create";
+import Home from "./Pages/Home";
 import Post from "./Pages/Post";
+import AboutUs from "./Pages/AboutUs";
 import Navbar from "./Components/Navbar";
 
 export default class App extends Component {
@@ -43,11 +45,18 @@ export default class App extends Component {
           <Navbar />
           <main className="mdl-layout__content mdl-color--grey-100">
             <Routes>
-              <Route path="/" element={<Dashboard />} />
+              <Route path="/" element={user ? <Dashboard /> : <Home />} />
               <Route
                 path="/login"
                 element={user ? <Navigate to="/" /> : <Login />}
               />
+        
+              <Route
+                path="/about-us"
+                element={ <AboutUs />}
+              />
+             
+              
               <Route
                 path="/create"
                 element={user ? <Create /> : <Navigate to="/login" />}
