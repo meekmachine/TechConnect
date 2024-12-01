@@ -1,19 +1,20 @@
 {
-  "name": "techconnect",
+  "name": "TechConnect",
   "private": true,
   "version": "0.0.0",
-  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.8.16",
     "bootstrap": "^5.3.3",
     "eslint-utils": "^3.0.0",
     "firebase": "^10.14.0",
+    "gh-pages": "^6.2.0",
     "image-extensions": "^1.2.0",
     "immutable": "^4.2.0",
     "is-url": "^1.2.4",
