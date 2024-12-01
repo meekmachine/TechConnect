@@ -112,12 +112,13 @@ const Dashboard = () => {
 
   const CategorySection = ({ title, items }) => (
     <div className="mb-4">
-      <h6 className="text-muted mb-3">{title}</h6>
+      <h6 data-testid={`category-${title}`} className="text-muted mb-3">{title}</h6>
       {items.map((item, index) => (
         <div
           key={index}
           className={`category-item ${selectedCategory === item ? 'active' : ''}`}
           onClick={() => setSelectedCategory(item)}
+          data-testid={`subcategory-${item}`}
         >
           {getCategoryLabel(item)}
         </div>

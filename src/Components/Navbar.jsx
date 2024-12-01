@@ -80,7 +80,7 @@ export default class Navbar extends Component {
     return (
       <div>
         <Navbarstrap color="navbar navbar-dark" expand="md">
-          <NavbarBrand href="/">React Firebase Forum</NavbarBrand>
+          <NavbarBrand data-testid="nav-title" href="/">React Firebase Forum</NavbarBrand>
           <NavbarToggler onClick={this.toggle} />
           <Collapse isOpen={this.state.isOpen} navbar>
             <Nav className="ml-auto" navbar>
@@ -90,7 +90,7 @@ export default class Navbar extends Component {
                 <NavLink hidden id="sign-out" href="#" onClick={() => firebaseSignOut(getAuth())}>
                   Sign-out
                 </NavLink>
-                <NavLink id="sign-in" href="#" onClick={signIn}>
+                <NavLink data-testid="sign-in-button" id="sign-in" href="#" onClick={signIn}>
                   <MaterialIcon id="account_circle" icon="account_circle" size="small" />
                   Sign-in with Google
                 </NavLink>
