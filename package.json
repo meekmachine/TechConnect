@@ -1,24 +1,29 @@
 {
-  "name": "techconnect",
+  "name": "TechConnect",
   "private": true,
   "version": "0.0.0",
-  "type": "module",
+  "homepage": "https://meekmachine.github.io/TechConnect",
+  "repository": "https://github.com/meekmachine/TechConnect.git",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.8.16",
     "bootstrap": "^5.3.3",
     "eslint-utils": "^3.0.0",
     "firebase": "^10.14.0",
+    "gh-pages": "^6.2.0",
     "image-extensions": "^1.2.0",
     "immutable": "^4.2.0",
     "is-url": "^1.2.4",
     "material-icons-react": "^1.0.7",
     "react": "^18.3.1",
+    "react-bootstrap": "^2.10.6",
+    "react-carousel": "^4.3.0",
     "react-dom": "^18.3.1",
     "react-firebase-file-uploader": "^2.5.0",
     "react-router-dom": "^6.15.0",

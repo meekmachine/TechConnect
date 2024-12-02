@@ -10,4 +10,5 @@ export default defineConfig({
   server: {
     sourcemap: true, // Enable source maps in development mode
   },
+  base: '/TechConnect/', // Adjust this to match your repository name
 })
