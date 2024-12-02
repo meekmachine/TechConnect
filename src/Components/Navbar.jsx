@@ -53,7 +53,7 @@ export default class Navbar extends Component {
 
       // Show user's profile and sign-out button
       userNameElement.removeAttribute("hidden");
-      userPicElement.removeAttribute("hidden");
+      userPicElement.removeAttribute("hidden");ot44
       signOutButtonElement.removeAttribute("hidden");
 
       // Hide sign-in button
