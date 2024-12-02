@@ -14,7 +14,7 @@ const Home = () => {
         <Carousel.Item>
           <img
             className="d-block w-100"
-            src="/images/header-img1.png"
+            src="/TechConnect/images/header-img1.png"
             alt="First slide"
           />
           <Carousel.Caption className="text-start text-black">
@@ -28,7 +28,7 @@ const Home = () => {
         <Carousel.Item>
           <img
             className="d-block w-100"
-            src="/images/header-img2.png"
+            src="/TechConnect/images/header-img2.png"
             alt="Second slide"
           />
           <Carousel.Caption className="text-white text-start">
@@ -55,7 +55,7 @@ const Home = () => {
               Learn More
             </Link>
             <img
-              src="/images/aboutus.png"
+              src="/TechConnect/images/aboutus.png"
               className="img-fluid mt-3"
               alt="About Us"
             />
@@ -65,7 +65,7 @@ const Home = () => {
           <div className="col-lg-4 col-md-6 mb-4 text-center content-section">
             <h3 className="roboto-condensed">Discover Job Market Insights</h3>
             <img
-              src="/images/charts.png"
+              src="/TechConnect/images/charts.png"
               className="img-fluid mt-3"
               alt="Job Market Insights"
             />
@@ -89,7 +89,7 @@ const Home = () => {
               Learn More
             </Link>
             <img
-              src="/images/privacy.png"
+              src="/TechConnect/images/privacy.png"
               className="img-fluid mt-3"
               alt="Privacy Policy"
             />
