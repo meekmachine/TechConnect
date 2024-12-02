@@ -3,10 +3,11 @@ import { Link } from 'react-router-dom';
 import {
   getUserName,
   getProfilePicUrl,
-  postQuerySnapshot
+  postQuerySnapshot,
 } from "../Scripts/firebase";
-import { POST_CATEGORIES } from './Create';
+import { POST_CATEGORIES,FEATURE_CATEGORIES } from './Create';
 import '../styles/Dashboard.css';
+import MarketAnalysis from './MarketAnalysis';
 
 const Dashboard = () => {
   const [selectedCategory, setSelectedCategory] = useState('JOBS');
@@ -75,7 +76,7 @@ const Dashboard = () => {
   const categories = {
     MAIN: ['Home'],
     POSTS: [...POST_CATEGORIES.map(cat => cat.id), 'OTHER'],
-    FEATURES: ['Featured Content', 'Trending']
+    FEATURES: [...FEATURE_CATEGORIES.map(cat => cat.id), 'OTHER']
   };
 
   const featuredCards = [
@@ -102,8 +103,9 @@ const Dashboard = () => {
   const getCategoryLabel = (categoryId) => {
     if (categoryId === 'Home') return 'Home';
     if (categoryId === 'OTHER') return 'Other';
-    const category = POST_CATEGORIES.find(cat => cat.id === categoryId);
-    return category ? category.label : 'Other';
+    const postCategory = POST_CATEGORIES.find(cat => cat.id === categoryId);
+    const featureCategory = FEATURE_CATEGORIES.find(cat => cat.id === categoryId);
+    return postCategory ? postCategory.label : featureCategory ? featureCategory.label : 'Other';
   };
 
   const getCategoryClass = (categoryId) => {
@@ -177,6 +179,9 @@ const Dashboard = () => {
               </Link>
             </div>
           </div>
+          {selectedCategory === 'MARKET_ANALYSIS' && (
+            <MarketAnalysis />
+            )}
 
           {/* Featured Cards */}
           {selectedCategory === 'Feed' && (
@@ -199,7 +204,8 @@ const Dashboard = () => {
           )}
 
           {/* Posts List */}
-          <div className="posts-list">
+          {selectedCategory !== 'MARKET_ANALYSIS' && (
+            <div className="posts-list">
             {loading ? (
               <div className="text-center">
                 <div className="spinner" />
@@ -245,33 +251,39 @@ const Dashboard = () => {
               ))
             )}
           </div>
+          )}
+          
         </div>
 
-        {/* Right Sidebar - Trending Posts */}
-        <div className="col-md-3 p-4">
-          <div className="most-read-card">
-            <h5 className="card-title mb-4">Trending Posts</h5>
-            {trendingPosts.map(post => (
-              <Link 
-                key={post.key} 
-                to={`/post/${post.key}`}
-                className="text-decoration-none"
-              >
-                <div className="most-read-item">
-                  <h6 className="mb-2 text-dark">{post.title}</h6>
-                  <div className="d-flex justify-content-between align-items-center">
-                    <span className={`badge ${getCategoryClass(post.category)}`}>
-                      {getCategoryLabel(post.category)}
-                    </span>
-                    <small className="text-muted">
-                      👁️ {post.views || 0}
-                    </small>
+        {selectedCategory !== 'MARKET_ANALYSIS' && (
+
+          <div className="col-md-3 p-4">
+            <div className="most-read-card">
+              <h5 className="card-title mb-4">Trending Posts</h5>
+              {trendingPosts.map(post => (
+                <Link
+                  key={post.key}
+                  to={`/post/${post.key}`}
+                  className="text-decoration-none"
+                >
+                  <div className="most-read-item">
+                    <h6 className="mb-2 text-dark">{post.title}</h6>
+                    <div className="d-flex justify-content-between align-items-center">
+                      <span className={`badge ${getCategoryClass(post.category)}`}>
+                        {getCategoryLabel(post.category)}
+                      </span>
+                      <small className="text-muted">
+                        👁️ {post.views || 0}
+                      </small>
+                    </div>
                   </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
+
+        
       </div>
     </div>
   );
