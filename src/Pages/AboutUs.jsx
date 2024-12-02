@@ -15,7 +15,7 @@ const AboutUs = () => {
         </div>
         <div className="col-lg-6 col-md-12 mb-4 text-center">
           <img
-            src="/images/pages/aboutus-img.png"
+            src="/TechConnect/images/pages/aboutus-img.png"
             className="img-fluid rounded page-img"
             alt="About Us"
           />

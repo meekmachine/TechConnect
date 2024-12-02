@@ -45,7 +45,7 @@ const Navbar = () => {
         <Collapse isOpen={isOpen} navbar>
           <Nav className="ml-auto" navbar>
             <NavItem>
-              <NavLink href="/TechConnect/home">Home</NavLink>
+              <NavLink href="/TechConnect/">Home</NavLink>
             </NavItem>
             <NavItem>
               <NavLink href="/TechConnect/about-us">About Us</NavLink>
