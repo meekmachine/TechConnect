@@ -8,6 +8,9 @@ import Create from "./Pages/Create";
 import Home from "./Pages/Home";
 import Post from "./Pages/Post";
 import AboutUs from "./Pages/AboutUs";
+import Profile from "./Pages/Profile";
+import PrivacyPolicy from "./Pages/PrivacyPolicy";
+import EditProfile from "./Pages/EditProfile";
 import Navbar from "./Components/Navbar";
 
 export default class App extends Component {
@@ -52,11 +55,18 @@ export default class App extends Component {
               />
         
               <Route
-                path="/about-us"
+                path="/about"
                 element={ <AboutUs />}
               />
              
-              
+             <Route
+                path="/profile"
+                element={ <Profile />}
+              />
+              <Route
+                path="/edit-profile"
+                element={ <EditProfile />}
+              />
               <Route
                 path="/create"
                 element={user ? <Create /> : <Navigate to="/login" />}

@@ -9,14 +9,21 @@ import {
   Nav,
   NavItem,
   NavLink,
+  Dropdown,
+  DropdownToggle,
+  DropdownMenu,
+  DropdownItem,
 } from "reactstrap";
 import { signIn, getUserName, getProfilePicUrl } from "../Scripts/firebase";
+import { Link } from "react-router-dom";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const toggle = () => setIsOpen(!isOpen);
+  const toggleDropdown = () => setDropdownOpen(!dropdownOpen);
 
   useEffect(() => {
     const auth = getAuth();
@@ -40,7 +47,7 @@ const Navbar = () => {
   return (
     <div>
       <Navbarstrap color="navbar navbar-dark" expand="md">
-        <NavbarBrand href="/">React Firebase Forum</NavbarBrand>
+        <NavbarBrand href="/TechConnect/">TechConnect</NavbarBrand>
         <NavbarToggler onClick={toggle} />
         <Collapse isOpen={isOpen} navbar>
           <Nav className="ml-auto" navbar>
@@ -48,32 +55,36 @@ const Navbar = () => {
               <NavLink href="/TechConnect/">Home</NavLink>
             </NavItem>
             <NavItem>
-              <NavLink href="/TechConnect/about-us">About Us</NavLink>
+              <NavLink href="/about">About Us</NavLink>
             </NavItem>
             {user ? (
-              <>
-                <NavItem>
+              <Dropdown isOpen={dropdownOpen} toggle={toggleDropdown}>
+                <DropdownToggle nav caret>
                   <div
                     id="user-pic"
                     style={{
                       backgroundImage: `url(${user.profilePic})`,
                       backgroundSize: "cover",
-                      width: "40px",
-                      height: "40px",
+                      width: "30px",
+                      height: "30px",
                       borderRadius: "50%",
                       display: "inline-block",
+                      marginRight: "10px",
                     }}
                   />
-                </NavItem>
-                <NavItem>
-                  <NavLink>{user.name}</NavLink>
-                </NavItem>
-                <NavItem>
-                  <NavLink href="#" onClick={handleSignOut}>
-                    Sign-out
-                  </NavLink>
-                </NavItem>
-              </>
+                  {user.name}
+                </DropdownToggle>
+                <DropdownMenu>
+                  <DropdownItem tag={Link} to="/profile">
+                    Profile
+                  </DropdownItem>
+                  <DropdownItem tag={Link} to="/edit-profile">
+                    Edit Profile
+                  </DropdownItem>
+                  <DropdownItem divider />
+                  <DropdownItem onClick={handleSignOut}>Sign-out</DropdownItem>
+                </DropdownMenu>
+              </Dropdown>
             ) : (
               <NavItem>
                 <NavLink href="#" onClick={signIn}>
