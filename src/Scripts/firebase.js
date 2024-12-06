@@ -1,6 +1,6 @@
 import { auth, db, storage } from "../Firebase"; // Import initialized services from config
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import { collection, doc, getDoc, setDoc, updateDoc, getDocs, query, serverTimestamp, addDoc } from "firebase/firestore";
+import { collection, doc, getDoc, setDoc, updateDoc, getDocs, query, serverTimestamp, addDoc, deleteDoc } from "firebase/firestore";
 import { GoogleAuthProvider, signInWithPopup, signOut as firebaseSignOut } from "firebase/auth";
 
 /**
@@ -290,4 +290,62 @@ export const invalidatePost = (post_key, onAfterupdate) => {
     lastEdit: serverTimestamp()
   };
   updatePost(post_key, data_post, onAfterupdate);
+};
+
+/**
+ * Delete a post and its comments from Firestore
+ */
+export const deletePost = async (post_key) => {
+  try {
+    console.log('Starting post deletion for key:', post_key);
+    
+    // Verify post exists before deletion
+    const postRef = doc(fire_posts, post_key);
+    const postDoc = await getDoc(postRef);
+    
+    if (!postDoc.exists()) {
+      throw new Error('Post document does not exist');
+    }
+    
+    // Verify user has permission (post author matches current user)
+    const postData = postDoc.data();
+    const currentUser = getUserName();
+    if (postData.author !== currentUser) {
+      throw new Error('User does not have permission to delete this post');
+    }
+
+    console.log('Deleting post document...');
+    await deleteDoc(postRef);
+    console.log('Post document deleted successfully');
+
+    // Delete the associated comments document
+    console.log('Deleting comments document...');
+    const commentsRef = doc(fire_comments, post_key);
+    await deleteDoc(commentsRef);
+    console.log('Comments document deleted successfully');
+
+    return true;
+  } catch (error) {
+    console.error("Error deleting post:", error.message);
+    throw error;
+  }
+};
+
+/**
+ * Delete a comment from a post
+ */
+export const deleteComment = async (post_key, comment_id) => {
+  try {
+    const commentsRef = doc(fire_comments, post_key);
+    const docSnap = await getDoc(commentsRef);
+    
+    if (docSnap.exists()) {
+      const comments = docSnap.data();
+      delete comments[comment_id];
+      await setDoc(commentsRef, comments);
+    }
+  } catch (error) {
+    console.error("Error deleting comment:", error);
+    throw error;
+  }
 };
