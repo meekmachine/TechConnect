@@ -81,17 +81,47 @@ export const truncate = (text, limit) => {
 };
 
 /**
- * Convert a Firebase timestamp to Date object
+ * Convert a Firebase timestamp or other date format to Date object
  *
- * @param  {Object} firebaseTimeStamp
- * @return {Date}
+ * @param  {Object|Number|String} timestamp
+ * @return {Date|null}
  */
-export const getDateObject = (firebaseTimeStamp) => {
-  if (!firebaseTimeStamp) {
-    return "";
+export const getDateObject = (timestamp) => {
+  if (!timestamp) {
+    return null;
   }
-  // Convert Firebase timestamp to JavaScript Date
-  return firebaseTimeStamp.toDate();
+
+  try {
+    // Handle Firestore Timestamp
+    if (timestamp.toDate && typeof timestamp.toDate === 'function') {
+      return timestamp.toDate();
+    }
+    
+    // Handle seconds timestamp from Firestore
+    if (timestamp.seconds) {
+      return new Date(timestamp.seconds * 1000);
+    }
+
+    // Handle milliseconds timestamp
+    if (typeof timestamp === 'number') {
+      return new Date(timestamp);
+    }
+
+    // Handle ISO string or other date string
+    if (typeof timestamp === 'string') {
+      return new Date(timestamp);
+    }
+
+    // If it's already a Date object
+    if (timestamp instanceof Date) {
+      return timestamp;
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Error converting timestamp:', error);
+    return null;
+  }
 };
 
 /**

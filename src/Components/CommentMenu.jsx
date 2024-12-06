@@ -3,67 +3,60 @@ import { getUserName } from "../Scripts/firebase";
 import { Link } from "react-router-dom";
 
 export default class CommentMenu extends Component {
-  toggleClose() {
-    this.props.toggleCloseCallback();
-  }
+  handleToggleClose = () => {
+    const { post_key } = this.props;
+    if (this.props.toggleCloseCallback) {
+      this.props.toggleCloseCallback(post_key);
+    }
+  };
 
-  delete() {
-    this.props.deleteCallback();
-  }
+  handleDelete = () => {
+    const { post_key, comment_id } = this.props;
+    if (this.props.deleteCallback) {
+      this.props.deleteCallback(post_key, comment_id);
+    }
+  };
 
   render() {
-    let post_key = this.props.post_key;
-    let comment_id = this.props.comment_id;
-    let post_status = this.props.post_status;
+    const { post_key, comment_id, post_status, author } = this.props;
+    const currentUser = getUserName();
+
+    if (author !== currentUser) {
+      return null;
+    }
+
     return (
-      this.props.author === getUserName() && (
-        <div className="postmenu small text-muted bottom-right">
-          <Link
-            to={"/edit/" + post_key + "/" + this.props.comment_id}
-          >
-            edit
-          </Link>
+      <div className="d-flex gap-2 text-muted">
+        <Link
+          to={`/edit/${post_key}/${comment_id}`}
+          className="text-decoration-none text-muted"
+        >
+          <i className="bi bi-pencil me-1"></i>
+          Edit
+        </Link>
 
-          <span>&nbsp;&nbsp;</span>
-
-          {comment_id === "1" && post_status === "open" && (
-            <span>
-              <button
-                type="button"
-                className="link-button"
-                title="When closed no answer can be posted"
-                onClick={() => this.toggleClose()}
-              >
-                close
-              </button>
-              <span>&nbsp;&nbsp;</span>
-            </span>
-          )}
-
-          {comment_id === "1" &&
-            post_status === "closed" && (
-              <span>
-                <button
-                  type="button"
-                  className="link-button"
-                  title="Open this post again to new answers"
-                  onClick={() => this.toggleClose()}
-                >
-                  open
-                </button>
-                <span>&nbsp;&nbsp;</span>
-              </span>
-            )}
+        {comment_id === "1" && (
           <button
             type="button"
-            className="link-button"
-            title="Delete the content of this comment/post"
-            onClick={() => this.delete()}
+            className="btn btn-link text-muted p-0 border-0"
+            title={post_status === "open" ? "Close this post to new comments" : "Open this post for new comments"}
+            onClick={this.handleToggleClose}
           >
-            delete
+            <i className={`bi bi-${post_status === "open" ? "lock" : "unlock"} me-1`}></i>
+            {post_status === "open" ? "Close" : "Open"}
           </button>
-        </div>
-      )
+        )}
+
+        <button
+          type="button"
+          className="btn btn-link text-danger p-0 border-0"
+          title={`Delete this ${comment_id === "1" ? "post" : "comment"}`}
+          onClick={this.handleDelete}
+        >
+          <i className="bi bi-trash me-1"></i>
+          Delete
+        </button>
+      </div>
     );
   }
 }

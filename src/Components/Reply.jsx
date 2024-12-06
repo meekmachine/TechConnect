@@ -1,141 +1,177 @@
 import React, { Component } from "react";
+import { useNavigate } from "react-router-dom";
 import TextEditor from "./TextEditor/TextEditor";
 import {
-  fire_comments,
-  getUserName,
-  getProfilePicUrl,
-  getServerTimestamp,
   getPost,
   updatePost,
-  pushComment
+  pushComment,
+  getUserName,
+  getProfilePicUrl
 } from "../Scripts/firebase";
+
+const ReplyWrapper = (props) => {
+  const navigate = useNavigate();
+  return <Reply {...props} navigate={navigate} />;
+};
 
 class Reply extends Component {
   state = {
     post: undefined,
-    post_key: "",
+    post_key: this.props.post_key || "",
     comment_key: "",
-    richText: "",
-    isLoading: false
+    isLoading: false,
+    error: "",
+    isMounted: false
   };
-  fire_comment = fire_comments.doc(this.props.post_key);
-  refEditor = React.createRef();
-  initialRichText = "<p></p>"; // this is rich text (I mean a string with HTML code)
+
+  editorRef = React.createRef();
 
   componentDidMount() {
-    getPost(this.props.post_key, doc => {
-      this.setState({
-        ...this.state,
-        post: doc.data(),
-        post_key: doc.id,
-        comment_key: doc.data().comments + 1,
-        richText: "",
-        isLoading: false
+    this.setState({ isLoading: true, isMounted: true });
+    
+    if (this.props.post_key) {
+      getPost(this.props.post_key, doc => {
+        if (this.state.isMounted) {
+          if (doc.exists()) {
+            const postData = doc.data();
+            this.setState({
+              post: postData,
+              post_key: doc.id,
+              comment_key: postData.comments + 1,
+              isLoading: false,
+              error: ""
+            });
+          } else {
+            this.setState({
+              isLoading: false,
+              error: "Failed to load post data"
+            });
+          }
+        }
       });
-    });
+    } else {
+      this.setState({ isLoading: false });
+    }
   }
 
-  onSubmit = e => {
+  componentWillUnmount() {
+    this.setState({ isMounted: false });
+  }
+
+  onSubmit = async (e) => {
     e.preventDefault();
-    const { comment_key } = this.state;
-    var richText = this.refEditor.current.state.valueHtml;
-    var plainText = this.refEditor.current.state.plainText;
-    if (plainText === "" || richText === "") {
-      alert("Text cannot be empty");
-      e.preventDefault();
-      return;
-    }
-    const timestamp = getServerTimestamp();
-    var data = {
-      author: getUserName(),
-      plainText: plainText,
-      profilePicUrl: getProfilePicUrl(),
-      richText: richText,
-      lastEdit: timestamp,
-      timestamp: timestamp
-    };
-
-    /*
-    //not working on fire_comment
-    //fire_comments.doc(this.props.post_key).FieldValue.arrayUnion(data)
     
-    //Add collection. Works, one nesting (2nd document) too much
-    fire_comments.doc(this.props.post_key)
-      .collection(comment_key.toString())
-      .add(data);
+    if (!this.state.isMounted) return;
 
-    //Works but overwrites document
-    var comment_obj = {}; // {1: {author: 'ale',.. }}
-    comment_obj[comment_key] = data;
-    fire_comments.doc(this.props.post_key)
-      .set(comment_obj)
-      .then(docRef => {
-        console.log("success");
-      })
-      .catch(error => {
-        console.error("Error adding comment document: ", error);
-      });
-
-    //This is what works and is what I am using in pushComment below
-    fire_comments.doc(this.props.post_key)
-      .get()
-      .then(doc => {
-        var document = doc.data();
-        if (!document) document = {};
-        document[comment_key] = data;
-        this.fire_comment.set(document).catch(error => {
-          console.error("Error on setting document: ", error);
+    try {
+      this.setState({ isLoading: true, error: "" });
+      
+      const { post_key } = this.state;
+      const commentText = this.editorRef.current.getValue();
+      
+      if (!post_key) {
+        this.setState({
+          error: "Invalid post reference",
+          isLoading: false
         });
-      })
-      .catch(error => {
-        console.error("Error on getting document: ", error);
         return;
-      });
-      */
-
-    pushComment(this.props.post_key, comment_key, data);
-
-    // Update number of comments in post collection
-    updatePost(
-      this.props.post_key,
-      { comments: this.state.comment_key },
-      () => {
-        // Close Reply menu
-        this.props.toggleShowReply();
-        // Can avoid this refresh with observables but easier to reload the page
-        window.location.reload();
       }
-    );
+      
+      if (!commentText || commentText.trim() === "") {
+        this.setState({ 
+          error: "Comment text cannot be empty",
+          isLoading: false 
+        });
+        return;
+      }
+
+      // Get the next comment ID and update local state through parent component
+      const nextCommentId = await this.props.onCommentSubmit(commentText);
+
+      // Create comment data
+      const currentTime = new Date();
+      const commentData = {
+        author: getUserName(),
+        plainText: commentText,
+        richText: commentText,
+        timestamp: {
+          seconds: Math.floor(currentTime.getTime() / 1000),
+          nanoseconds: 0
+        },
+        lastEdit: {
+          seconds: Math.floor(currentTime.getTime() / 1000),
+          nanoseconds: 0
+        },
+        profilePicUrl: getProfilePicUrl()
+      };
+
+      // Push the comment to Firebase
+      await pushComment(post_key, nextCommentId, commentData);
+
+      // Update comment count
+      await updatePost(
+        post_key,
+        { comments: nextCommentId }
+      );
+
+      // Reset the editor and state
+      if (this.state.isMounted) {
+        this.setState({ isLoading: false });
+        if (this.editorRef.current) {
+          this.editorRef.current.setValue("");
+        }
+      }
+
+    } catch (error) {
+      console.error("Error submitting comment:", error);
+      if (this.state.isMounted) {
+        this.setState({
+          error: "Failed to submit comment. Please try again.",
+          isLoading: false
+        });
+      }
+    }
   };
 
   render() {
-    let { post_key } = this.state;
+    const { isLoading, error, post_key } = this.state;
+    
     return (
-      <div className="panel panel-default">
-        <div className="panel-heading" />
-        <div className="panel-body">
-          <form onSubmit={this.onSubmit}>
-            <div className="form-group">
-              <div className="border border-dark">
-                <TextEditor
-                  autoFocus
-                  ref={this.refEditor}
-                  post_key={post_key}
-                  initialRichText={this.initialRichText}
-                  height="10em"
-                />
-              </div>
+      <div className="card shadow-sm">
+        <div className="card-body">
+          {error && (
+            <div className="alert alert-danger mb-3" role="alert">
+              <i className="bi bi-exclamation-triangle me-2"></i>
+              {error}
             </div>
-            <div>
-              <button type="submit" className="btn btn-bgn">
-                Submit
-              </button>
-              <button
-                type="submit"
-                className="btn btn-bgn ml-1"
-                onClick={() => this.props.toggleShowReply()}
+          )}
+          
+          <form onSubmit={this.onSubmit}>
+            <div className="form-group mb-3">
+              <TextEditor
+                ref={this.editorRef}
+                postKey={post_key}
+                initialText=""
+              />
+            </div>
+            
+            <div className="d-flex gap-2">
+              <button 
+                type="submit" 
+                className="btn btn-primary"
+                disabled={isLoading}
               >
-                Cancel
+                {isLoading ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    <i className="bi bi-send me-2"></i>
+                    Submit Comment
+                  </>
+                )}
               </button>
             </div>
           </form>
@@ -145,4 +181,4 @@ class Reply extends Component {
   }
 }
 
-export default Reply;
+export default ReplyWrapper;

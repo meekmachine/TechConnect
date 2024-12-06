@@ -1,11 +1,12 @@
 import React, { Component } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import TextEditor from "../Components/TextEditor/TextEditor";
 import {
   getUserName,
   getProfilePicUrl,
   getServerTimestamp,
-  setPostReference
+  setPostReference,
+  pushComment
 } from "../Scripts/firebase";
 
 // Define post categories
@@ -36,6 +37,11 @@ export const POST_CATEGORIES = [
     color: '#6c757d'
   }
 ];
+
+const CreateWrapper = () => {
+  const navigate = useNavigate();
+  return <Create navigate={navigate} />;
+};
 
 class Create extends Component {
   state = {
@@ -71,6 +77,7 @@ class Create extends Component {
       const profilePicUrl = getProfilePicUrl();
       const timestamp = getServerTimestamp();
       const plainText = this.refEditor.current.getValue();
+      const richText = plainText.replace(/\n/g, '<br/>'); // Convert newlines to HTML breaks
       
       const data_post = {
         author,
@@ -88,7 +95,18 @@ class Create extends Component {
       const postId = await setPostReference(null, data_post);
       
       if (postId) {
-        window.location.href = `/post/${postId}`;
+        // Save the post content as comment #1
+        const commentData = {
+          author,
+          plainText,
+          richText,
+          profilePicUrl,
+          lastEdit: timestamp,
+          timestamp
+        };
+        
+        await pushComment(postId, "1", commentData);
+        this.props.navigate(`/post/${postId}`);
       } else {
         this.setState({ 
           errorMessage: "Failed to create post - no postId returned",
@@ -177,4 +195,4 @@ class Create extends Component {
   }
 }
 
-export default Create;
+export default CreateWrapper;
