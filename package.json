@@ -28,6 +28,7 @@
     "react-firebase-file-uploader": "^2.5.0",
     "react-router-dom": "^6.15.0",
     "reactstrap": "^9.1.5",
+    "recharts": "^2.13.3",
     "slate": "^0.110.2",
     "slate-react": "",
     "styled-components": ""

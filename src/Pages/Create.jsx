@@ -38,10 +38,19 @@ export const POST_CATEGORIES = [
   }
 ];
 
+
 const CreateWrapper = () => {
   const navigate = useNavigate();
   return <Create navigate={navigate} />;
 };
+
+export const FEATURE_CATEGORIES = [
+  {
+    id: 'MARKET_ANALYSIS',
+    label: 'Market Analysis',
+    color: '#28a745'
+  }
+]
 
 class Create extends Component {
   state = {
