@@ -37,6 +37,14 @@ export const POST_CATEGORIES = [
   }
 ];
 
+export const FEATURE_CATEGORIES = [
+  {
+    id: 'MARKET_ANALYSIS',
+    label: 'Market Analysis',
+    color: '#28a745'
+  }
+]
+
 class Create extends Component {
   state = {
     title: "",
