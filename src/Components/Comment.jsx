@@ -110,6 +110,11 @@ class Comment extends Component {
             post_status={post_status}
             deleteCallback={this.deleteCallback}
             toggleCloseCallback={this.toggleCloseCallback}
+          <div className="reaction-buttons">
+            <button onClick={() => this.props.handleReaction('like')}>👍 {comment.reactions?.like || 0}</button>
+            <button onClick={() => this.props.handleReaction('love')}>❤️ {comment.reactions?.love || 0}</button>
+            <button onClick={() => this.props.handleReaction('laugh')}>😂 {comment.reactions?.laugh || 0}</button>
+          </div>
           />
         </div>
       </div>

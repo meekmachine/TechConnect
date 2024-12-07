@@ -106,6 +106,14 @@ class Reply extends Component {
       };
 
       // Push the comment to Firebase
+      // Optionally handle reactions for the new comment, if needed in future expansions.
+      if (commentData.reactions) {
+        commentData.reactions = {
+          like: 0,
+          love: 0,
+          laugh: 0
+        };
+      }
       await pushComment(post_key, nextCommentId, commentData);
 
       // Update comment count
