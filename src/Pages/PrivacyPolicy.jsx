@@ -46,7 +46,7 @@ const PrivacyPolicy = () => {
         {/* Image Column */}
         <div className="col-lg-6 col-md-12 mb-4 text-center">
           <img
-            src="/images/pages/privacy-img.png"
+            src="/TechConnect/images/pages/privacy-img.png"
             className="img-fluid rounded page-img"
             alt="Privacy Policy"
           />
