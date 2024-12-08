@@ -1,17 +1,52 @@
-import { auth, db, storage } from "../Firebase"; // Import initialized services from config
-import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import { collection, doc, getDoc, setDoc, updateDoc, getDocs, query, serverTimestamp, addDoc, deleteDoc } from "firebase/firestore";
-import { GoogleAuthProvider, signInWithPopup, signOut as firebaseSignOut } from "firebase/auth";
+import { auth, db, storage } from "../Firebase";
+import {
+  ref,
+  uploadBytesResumable,
+  getDownloadURL
+} from "firebase/storage";
+import {
+  collection,
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  getDocs,
+  query,
+  serverTimestamp,
+  addDoc,
+  deleteDoc,
+  runTransaction
+} from "firebase/firestore";
+import {
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut as firebaseSignOut
+} from "firebase/auth";
+
+/**
+ * Handle errors during file uploads.
+ */
+const handleUploadError = (error, onError) => {
+  let msg = "";
+  switch (error.code) {
+    case "storage/unauthorized":
+      msg = "User does not have permission to access the object.";
+      break;
+    case "storage/canceled":
+      msg = "User canceled the upload.";
+      break;
+    case "storage/unknown":
+      msg = "Unknown error occurred, inspect error.serverResponse.";
+      break;
+    default:
+      msg = "An error occurred.";
+  }
+  onError(msg, error);
+};
 
 /**
  * Cloud Storage
- *
- * @param {String} storagePath - Path in Firebase storage where the file gets stored
- * @param {File} file - The file as a File object
- * @param {UploadMetadata} metadata - Metadata for the newly uploaded object
- * @callback onUploadProgress - Callback to monitor the upload progress
- * @callback onSuccessfulUpload - Callback when the file is successfully uploaded
- * @callback onError - Callback when an error occurs during the upload
+ * Uploads files to Firebase storage with progress tracking and error handling.
  */
 export const uploadToStorage = (
   storagePath,
@@ -38,43 +73,12 @@ export const uploadToStorage = (
 };
 
 /**
- * Handle errors during upload
+ * User Authentication and Profile Helpers
  */
-const handleUploadError = (error, onError) => {
-  let msg = "";
-  switch (error.code) {
-    case "storage/unauthorized":
-      msg = "User does not have permission to access the object.";
-      break;
-    case "storage/canceled":
-      msg = "User canceled the upload.";
-      break;
-    case "storage/unknown":
-      msg = "Unknown error occurred, inspect error.serverResponse.";
-      break;
-    default:
-      msg = "An error occurred.";
-  }
-  onError(msg, error);
-};
+export const getUserName = () => auth?.currentUser?.displayName || "Unknown";
 
-/**
- * Return the signed-in user's display name.
- */
-export const getUserName = () => {
-  return auth?.currentUser?.displayName || "Unknown";
-};
+export const getProfilePicUrl = () => auth?.currentUser?.photoURL || "/images/profile_placeholder.png";
 
-/**
- * Return the signed-in user's profile Pic URL.
- */
-export const getProfilePicUrl = () => {
-  return auth?.currentUser?.photoURL || "/images/profile_placeholder.png";
-};
-
-/**
- * Return a style for the picture
- */
 export const profilePicStyle = (url, style = {}) => {
   if (!url) return undefined;
   if (url.includes("googleusercontent.com") && !url.includes("?")) {
@@ -83,19 +87,9 @@ export const profilePicStyle = (url, style = {}) => {
   return { ...style, backgroundImage: `url(${url})` };
 };
 
-/**
- * Get the current timestamp from Firebase server
- */
-export const getServerTimestamp = () => {
-  return serverTimestamp();
-};
-
-/**
- * Signs-in using popup auth and Google as the identity provider
- */
 export const signIn = () => {
-  const provider = new GoogleAuthProvider(); // Firebase v9: GoogleAuthProvider is imported from firebase/auth
-  return signInWithPopup(auth, provider)     // Firebase v9: signInWithPopup is imported from firebase/auth
+  const provider = new GoogleAuthProvider();
+  return signInWithPopup(auth, provider)
     .then((result) => {
       console.log("User signed in: ", result.user);
     })
@@ -104,11 +98,8 @@ export const signIn = () => {
     });
 };
 
-/**
- * Signs-out of Firebase.
- */
 export const signOut = () => {
-  return firebaseSignOut(auth)               // Firebase v9: signOut is imported from firebase/auth
+  return firebaseSignOut(auth)
     .then(() => {
       console.log("User signed out.");
     })
@@ -117,19 +108,22 @@ export const signOut = () => {
     });
 };
 
-/**
- * Get the post collection
- */
-export const fire_posts = collection(db, "posts");
+export const getServerTimestamp = () => serverTimestamp();
 
 /**
- * Query all posts and return a snapshot.
+ * Firestore References
+ */
+export const fire_posts = collection(db, "posts");
+export const fire_comments = collection(db, "comments");
+
+/**
+ * Retrieve all posts and pass them to a callback.
  */
 export const postQuerySnapshot = async (onSnapshot) => {
   try {
     const q = query(fire_posts);
     const snapshot = await getDocs(q);
-    console.log("Number of posts fetched:", snapshot.size); // Debug log
+    console.log("Number of posts fetched:", snapshot.size);
     onSnapshot(snapshot);
   } catch (error) {
     console.error("Error getting post snapshot:", error);
@@ -137,31 +131,11 @@ export const postQuerySnapshot = async (onSnapshot) => {
 };
 
 /**
- * Get the comment collection
- */
-export const fire_comments = collection(db, "comments");
-
-/**
- * Get a reference to a post document
- */
-export const getPostReference = (postId = null) => {
-  if (postId) {
-    return doc(fire_posts, postId);
-  }
-  // Return a new document reference with auto-generated ID
-  return doc(fire_posts);
-};
-
-/**
- * Save or update a document in the specified collection
- * @param {string|null} post_key - The document ID for the post. If null, Firestore generates a new one.
- * @param {object} data_post - The data to save to the post.
- * @param {function} onSetDocument - Optional callback on success.
+ * Save or update a post document.
  */
 export const setPostReference = async (post_key = null, data_post, onSetDocument = () => {}) => {
   try {
     let fire_post;
-
     if (post_key) {
       fire_post = doc(fire_posts, post_key);
       await setDoc(fire_post, {
@@ -174,7 +148,6 @@ export const setPostReference = async (post_key = null, data_post, onSetDocument
         timestamp: serverTimestamp(),
       });
     }
-
     onSetDocument(fire_post.id);
     return fire_post.id;
   } catch (error) {
@@ -184,7 +157,58 @@ export const setPostReference = async (post_key = null, data_post, onSetDocument
 };
 
 /**
- * Get a post document and optionally run a callback on it
+ * Increment the view count for a post.
+ */
+export const incrementViewCount = async (postId) => {
+  const postRef = doc(fire_posts, postId);
+  try {
+    await runTransaction(db, async (transaction) => {
+      const postDoc = await transaction.get(postRef);
+      if (!postDoc.exists()) throw "Post does not exist";
+      const currentViews = postDoc.data().views || 0;
+      transaction.update(postRef, { views: currentViews + 1 });
+    });
+  } catch (error) {
+    console.error("Error incrementing view count:", error);
+  }
+};
+
+/**
+ * Toggle like for a post by the current user.
+ * If the user already liked the post, remove the like.
+ * If not, add the like.
+ */
+export const toggleLike = async (postId, userId) => {
+  const postRef = doc(fire_posts, postId);
+  try {
+    const updatedUserLikes = await runTransaction(db, async (transaction) => {
+      const postDoc = await transaction.get(postRef);
+      if (!postDoc.exists()) throw "Post does not exist";
+
+      const postData = postDoc.data();
+      const userLikes = postData.userLikes || [];
+      const userIndex = userLikes.indexOf(userId);
+
+      if (userIndex > -1) {
+        // User already liked, remove the like
+        userLikes.splice(userIndex, 1);
+      } else {
+        // Add the userId to likes
+        userLikes.push(userId);
+      }
+
+      transaction.update(postRef, { userLikes });
+      return userLikes;
+    });
+    return updatedUserLikes;
+  } catch (error) {
+    console.error("Error toggling like:", error);
+    throw error;
+  }
+};
+
+/**
+ * Retrieve a post document and run a callback on it.
  */
 export const getPost = async (post_key, onGetDocument = () => {}) => {
   try {
@@ -201,7 +225,7 @@ export const getPost = async (post_key, onGetDocument = () => {}) => {
 };
 
 /**
- * Get a comment document and optionally run a callback on it
+ * Retrieve a comment document and run a callback on it.
  */
 export const getComment = async (post_key, onGetDocument = () => {}) => {
   try {
@@ -218,7 +242,7 @@ export const getComment = async (post_key, onGetDocument = () => {}) => {
 };
 
 /**
- * Add or update a user's comment in the comments collection
+ * Add or update a user's comment in the comments collection.
  */
 export const pushComment = async (post_key, comment_key, data, onSetDocument = () => {}) => {
   const fire_comment_doc = doc(fire_comments, post_key);
@@ -234,7 +258,7 @@ export const pushComment = async (post_key, comment_key, data, onSetDocument = (
 };
 
 /**
- * Update a post in Firestore
+ * Update a post by merging existing data with new data.
  */
 export const updatePost = async (post_key, data_post, onAfterUpdate = () => {}) => {
   const fire_post_doc = doc(fire_posts, post_key);
@@ -248,7 +272,7 @@ export const updatePost = async (post_key, data_post, onAfterUpdate = () => {}) 
 };
 
 /**
- * Update a comment document in Firestore
+ * Update a comment by merging existing data with new data.
  */
 export const updateComment = async (post_key, commentid, data_comment, onAfterSetDocument = () => {}) => {
   const fire_comment_doc = doc(fire_comments, post_key);
@@ -264,7 +288,7 @@ export const updateComment = async (post_key, commentid, data_comment, onAfterSe
 };
 
 /**
- * Invalidate a comment by clearing its content
+ * Invalidate a comment by clearing its content but not removing the doc reference entirely.
  */
 export const invalidateComment = (post_key, commentid, onAfterSetDocument) => {
   const data_comment = {
@@ -278,7 +302,7 @@ export const invalidateComment = (post_key, commentid, onAfterSetDocument) => {
 };
 
 /**
- * Invalidate a post by clearing its content
+ * Invalidate a post by clearing its content but not removing the doc reference entirely.
  */
 export const invalidatePost = (post_key, onAfterupdate) => {
   const data_post = {
@@ -293,13 +317,13 @@ export const invalidatePost = (post_key, onAfterupdate) => {
 };
 
 /**
- * Delete a post and its comments from Firestore
+ * Delete a post and its associated comments.
  */
 export const deletePost = async (post_key) => {
   try {
     console.log('Starting post deletion for key:', post_key);
     
-    // Verify post exists before deletion
+    // Verify post exists
     const postRef = doc(fire_posts, post_key);
     const postDoc = await getDoc(postRef);
     
@@ -307,7 +331,7 @@ export const deletePost = async (post_key) => {
       throw new Error('Post document does not exist');
     }
     
-    // Verify user has permission (post author matches current user)
+    // Verify user has permission
     const postData = postDoc.data();
     const currentUser = getUserName();
     if (postData.author !== currentUser) {
@@ -332,7 +356,7 @@ export const deletePost = async (post_key) => {
 };
 
 /**
- * Delete a comment from a post
+ * Delete a specific comment from a post.
  */
 export const deleteComment = async (post_key, comment_id) => {
   try {

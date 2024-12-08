@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   getUserName,
-  getProfilePicUrl,
   postQuerySnapshot,
+  incrementViewCount, // Add a function to handle view count increments
+  toggleLike // Function to handle like reactions
 } from "../Scripts/firebase";
-import { POST_CATEGORIES,FEATURE_CATEGORIES } from './Create';
+import { POST_CATEGORIES, FEATURE_CATEGORIES } from './Create';
 import '../styles/Dashboard.css';
 import MarketAnalysis from './MarketAnalysis';
 
@@ -14,13 +15,20 @@ const Dashboard = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [userId, setUserId] = useState(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const user = await getUserName();
+      setUserId(user);
+    };
+    fetchUser();
+  }, []);
 
   const getRelativeTime = (timestamp) => {
     if (!timestamp) return '';
-    
-    // Convert Firestore Timestamp to Date if necessary
-    const date = timestamp && typeof timestamp.toDate === 'function' 
-      ? timestamp.toDate() 
+    const date = timestamp && typeof timestamp.toDate === 'function'
+      ? timestamp.toDate()
       : new Date(timestamp);
 
     if (isNaN(date.getTime())) return '';
@@ -33,18 +41,39 @@ const Dashboard = () => {
     const diffInMonths = Math.floor(diffInDays / 30);
     const diffInYears = Math.floor(diffInDays / 365);
 
-    if (diffInSeconds < 60) {
-      return diffInSeconds === 1 ? '1 second ago' : `${diffInSeconds} seconds ago`;
-    } else if (diffInMinutes < 60) {
-      return diffInMinutes === 1 ? '1 minute ago' : `${diffInMinutes} minutes ago`;
-    } else if (diffInHours < 24) {
-      return diffInHours === 1 ? '1 hour ago' : `${diffInHours} hours ago`;
-    } else if (diffInDays < 30) {
-      return diffInDays === 1 ? '1 day ago' : `${diffInDays} days ago`;
-    } else if (diffInMonths < 12) {
-      return diffInMonths === 1 ? '1 month ago' : `${diffInMonths} months ago`;
-    } else {
-      return diffInYears === 1 ? '1 year ago' : `${diffInYears} years ago`;
+    if (diffInSeconds < 60) return `${diffInSeconds} seconds ago`;
+    if (diffInMinutes < 60) return `${diffInMinutes} minutes ago`;
+    if (diffInHours < 24) return `${diffInHours} hours ago`;
+    if (diffInDays < 30) return `${diffInDays} days ago`;
+    if (diffInMonths < 12) return `${diffInMonths} months ago`;
+    return `${diffInYears} years ago`;
+  };
+
+  const handleLike = async (postId) => {
+    try {
+      const updatedLikes = await toggleLike(postId, userId); // Backend update for likes
+      setPosts(posts.map(post => {
+        if (post.key === postId) {
+          return { ...post, likes: updatedLikes };
+        }
+        return post;
+      }));
+    } catch (error) {
+      console.error("Error toggling like:", error);
+    }
+  };
+
+  const handleView = async (postId) => {
+    try {
+      await incrementViewCount(postId); // Increment view count in Firestore
+      setPosts(posts.map(post => {
+        if (post.key === postId) {
+          return { ...post, views: (post.views || 0) + 1 }; // Increment locally for real-time feedback
+        }
+        return post;
+      }));
+    } catch (error) {
+      console.error("Error incrementing view count:", error);
     }
   };
 
@@ -56,9 +85,7 @@ const Dashboard = () => {
           const loadedPosts = [];
           snapshot.forEach((doc) => {
             const postData = doc.data();
-            if (!postData.category) {
-              postData.category = 'OTHER';
-            }
+            if (!postData.category) postData.category = 'OTHER';
             loadedPosts.push({ ...postData, key: doc.id });
           });
           setPosts(loadedPosts);
@@ -69,7 +96,6 @@ const Dashboard = () => {
         setLoading(false);
       }
     };
-
     loadPosts();
   }, []);
 
@@ -112,21 +138,6 @@ const Dashboard = () => {
     return `badge-${(categoryId || 'other').toLowerCase()}`;
   };
 
-  const CategorySection = ({ title, items }) => (
-    <div className="mb-4">
-      <h6 className="text-muted mb-3">{title}</h6>
-      {items.map((item, index) => (
-        <div
-          key={index}
-          className={`category-item ${selectedCategory === item ? 'active' : ''}`}
-          onClick={() => setSelectedCategory(item)}
-        >
-          {getCategoryLabel(item)}
-        </div>
-      ))}
-    </div>
-  );
-
   const filteredPosts = posts
     .filter(post => {
       const matchesCategory = selectedCategory === 'Home' || post.category === selectedCategory;
@@ -147,7 +158,18 @@ const Dashboard = () => {
         {/* Left Sidebar */}
         <div className="col-md-2 dashboard-sidebar">
           {Object.entries(categories).map(([title, items]) => (
-            <CategorySection key={title} title={title} items={items} />
+            <div key={title} className="mb-4">
+              <h6 className="text-muted mb-3">{title}</h6>
+              {items.map((item, index) => (
+                <div
+                  key={index}
+                  className={`category-item ${selectedCategory === item ? 'active' : ''}`}
+                  onClick={() => setSelectedCategory(item)}
+                >
+                  {getCategoryLabel(item)}
+                </div>
+              ))}
+            </div>
           ))}
         </div>
 
@@ -179,9 +201,7 @@ const Dashboard = () => {
               </Link>
             </div>
           </div>
-          {selectedCategory === 'MARKET_ANALYSIS' && (
-            <MarketAnalysis />
-            )}
+          {selectedCategory === 'MARKET_ANALYSIS' && <MarketAnalysis />}
 
           {/* Featured Cards */}
           {selectedCategory === 'Feed' && (
@@ -206,57 +226,68 @@ const Dashboard = () => {
           {/* Posts List */}
           {selectedCategory !== 'MARKET_ANALYSIS' && (
             <div className="posts-list">
-            {loading ? (
-              <div className="text-center">
-                <div className="spinner" />
-              </div>
-            ) : filteredPosts.length === 0 ? (
-              <div className="text-center mt-5">
-                <i className="material-icons" style={{ fontSize: '48px', color: '#718096' }}>
-                  search_off
-                </i>
-                <p className="mt-3 text-muted">No posts found in this category.</p>
-                <Link to="/create" className="btn btn-primary mt-2">
-                  Create the first post
-                </Link>
-              </div>
-            ) : (
-              filteredPosts.map(post => (
-                <div key={post.key} className="post-card">
-                  <div className="card-body p-0">
-                    <div className="d-flex justify-content-between align-items-center mb-3">
-                      <div className="d-flex align-items-center gap-2">
-                        <span className={`badge ${getCategoryClass(post.category)}`}>
-                          {getCategoryLabel(post.category)}
-                        </span>
+              {loading ? (
+                <div className="text-center">
+                  <div className="spinner" />
+                </div>
+              ) : filteredPosts.length === 0 ? (
+                <div className="text-center mt-5">
+                  <i className="material-icons" style={{ fontSize: '48px', color: '#718096' }}>
+                    search_off
+                  </i>
+                  <p className="mt-3 text-muted">No posts found in this category.</p>
+                  <Link to="/create" className="btn btn-primary mt-2">
+                    Create the first post
+                  </Link>
+                </div>
+              ) : (
+                filteredPosts.map(post => (
+                  <div
+                    key={post.key}
+                    className="post-card"
+                    onClick={() => handleView(post.key)}
+                  >
+                    <div className="card-body p-0">
+                      <div className="d-flex justify-content-between align-items-center mb-3">
+                        <div className="d-flex align-items-center gap-2">
+                          <span className={`badge ${getCategoryClass(post.category)}`}>
+                            {getCategoryLabel(post.category)}
+                          </span>
+                          <small className="text-muted">
+                            {post.author} • {post.company || 'General'}
+                          </small>
+                        </div>
                         <small className="text-muted">
-                          {post.author} • {post.company || 'General'}
+                          {getRelativeTime(post.timestamp)}
                         </small>
                       </div>
-                      <small className="text-muted">
-                        {getRelativeTime(post.timestamp)}
-                      </small>
-                    </div>
-                    <Link to={`/post/${post.key}`} className="text-decoration-none">
-                      <h5 className="mb-2 text-dark">{post.title}</h5>
-                    </Link>
-                    <p className="text-muted mb-3">{post.plainText}</p>
-                    <div className="post-stats">
-                      <span>👍 {post.likes || 0}</span>
-                      <span>💬 {(post.comments || 1) - 1}</span>
-                      <span>👁️ {post.views || 0}</span>
+                      <Link to={`/post/${post.key}`} className="text-decoration-none">
+                        <h5 className="mb-2 text-dark">{post.title}</h5>
+                      </Link>
+                      <p className="text-muted mb-3">{post.plainText}</p>
+                      <div className="post-stats">
+                        <span
+                          onClick={() => handleLike(post.key)}
+                          style={{
+                            cursor: 'pointer',
+                            marginRight: '8px',
+                            color: post.likes?.includes(userId) ? 'blue' : 'black'
+                          }}
+                        >
+                          👍 {post.likes?.length || 0}
+                        </span>
+                        <span>💬 {(post.comments || 1) - 1}</span>
+                        <span>👁️ {post.views || 0}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
-            )}
-          </div>
+                ))
+              )}
+            </div>
           )}
-          
         </div>
 
         {selectedCategory !== 'MARKET_ANALYSIS' && (
-
           <div className="col-md-3 p-4">
             <div className="most-read-card">
               <h5 className="card-title mb-4">Trending Posts</h5>
@@ -282,11 +313,9 @@ const Dashboard = () => {
             </div>
           </div>
         )}
-
-        
       </div>
     </div>
   );
 };
 
-export default Dashboard; 
+export default Dashboard;
