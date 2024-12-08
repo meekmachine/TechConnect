@@ -53,12 +53,10 @@ export default class App extends Component {
                 path="/login"
                 element={user ? <Navigate to="/" /> : <Login />}
               />
-        
               <Route
                 path="/about"
                 element={ <AboutUs />}
               />
-             
              <Route
                 path="/profile"
                 element={ <Profile />}
@@ -75,6 +73,10 @@ export default class App extends Component {
               <Route
                 path="/edit/:postkey/:commentid"
                 element={user ? <Edit /> : <Navigate to="/login" />}
+              />
+              <Route
+                path="/privacy"
+                element={ <PrivacyPolicy />}
               />
               <Route path="*" element={<h1>Page not found</h1>} />
             </Routes>

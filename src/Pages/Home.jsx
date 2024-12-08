@@ -20,7 +20,7 @@ const Home = () => {
           <Carousel.Caption className="text-start text-black">
             <h1 className="roboto-condensed">TechConnect</h1>
             <p>Where FIU Tech Minds Meet, Grow, and Thrive.</p>
-            <Button href="/join" variant="primary">
+            <Button href="/TechConnect/login" variant="primary">
               Join Now
             </Button>
           </Carousel.Caption>
