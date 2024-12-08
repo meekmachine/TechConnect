@@ -55,10 +55,10 @@ const Navbar = () => {
               <NavLink href="/TechConnect/">Home</NavLink>
             </NavItem>
             <NavItem>
-              <NavLink href="/TechConnect/about">About Us</NavLink>
+              <NavLink href="/TechConnect/about-us">About Us</NavLink>
             </NavItem>
             <NavItem>
-              <NavLink href="/TechConnect/privacy">Privacy Policy</NavLink>
+              <NavLink href="/TechConnect/privacy-policy">Privacy Policy</NavLink>
             </NavItem>
             {user ? (
               <Dropdown isOpen={dropdownOpen} toggle={toggleDropdown}>
