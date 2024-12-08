@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  getUserName,
   postQuerySnapshot,
-  incrementViewCount, // Add a function to handle view count increments
-  toggleLike // Function to handle like reactions
+  toggleLike
 } from "../Scripts/firebase";
+import { auth } from "../Firebase"; // Ensure you have access to auth
 import { POST_CATEGORIES, FEATURE_CATEGORIES } from './Create';
 import '../styles/Dashboard.css';
 import MarketAnalysis from './MarketAnalysis';
@@ -17,12 +16,16 @@ const Dashboard = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [userId, setUserId] = useState(null);
 
+  // Use auth.onAuthStateChanged to get a stable userId (UID)
   useEffect(() => {
-    const fetchUser = async () => {
-      const user = await getUserName();
-      setUserId(user);
-    };
-    fetchUser();
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        setUserId(user.uid);
+      } else {
+        setUserId(null);
+      }
+    });
+    return () => unsubscribe && unsubscribe();
   }, []);
 
   const getRelativeTime = (timestamp) => {
@@ -50,30 +53,44 @@ const Dashboard = () => {
   };
 
   const handleLike = async (postId) => {
+    if (!userId) {
+      console.warn("User not logged in. Cannot toggle like.");
+      return;
+    }
+
     try {
-      const updatedLikes = await toggleLike(postId, userId); // Backend update for likes
-      setPosts(posts.map(post => {
-        if (post.key === postId) {
-          return { ...post, likes: updatedLikes };
-        }
-        return post;
-      }));
+      await toggleLike(postId, userId);
+      // Update the local state after toggling the like
+      // Since toggleLike adjusts userLikes and likesCount in the database,
+      // We'll update the local state to reflect the new likesCount and userLikes array
+      setPosts((currentPosts) =>
+        currentPosts.map((post) => {
+          if (post.key === postId) {
+            const userAlreadyLikes = post.userLikes?.includes(userId);
+            let newUserLikes = post.userLikes || [];
+            let newLikesCount = post.likesCount || 0;
+
+            if (userAlreadyLikes) {
+              // Remove the user
+              newUserLikes = newUserLikes.filter((uid) => uid !== userId);
+              newLikesCount = Math.max(newLikesCount - 1, 0);
+            } else {
+              // Add the user
+              newUserLikes.push(userId);
+              newLikesCount += 1;
+            }
+
+            return {
+              ...post,
+              userLikes: newUserLikes,
+              likesCount: newLikesCount
+            };
+          }
+          return post;
+        })
+      );
     } catch (error) {
       console.error("Error toggling like:", error);
-    }
-  };
-
-  const handleView = async (postId) => {
-    try {
-      await incrementViewCount(postId); // Increment view count in Firestore
-      setPosts(posts.map(post => {
-        if (post.key === postId) {
-          return { ...post, views: (post.views || 0) + 1 }; // Increment locally for real-time feedback
-        }
-        return post;
-      }));
-    } catch (error) {
-      console.error("Error incrementing view count:", error);
     }
   };
 
@@ -86,6 +103,11 @@ const Dashboard = () => {
           snapshot.forEach((doc) => {
             const postData = doc.data();
             if (!postData.category) postData.category = 'OTHER';
+            // Ensure likesCount and viewsCount fields exist in the document
+            // If they do not, you may want to default them to 0 here:
+            if (postData.likesCount === undefined) postData.likesCount = 0;
+            if (postData.viewsCount === undefined) postData.viewsCount = 0;
+
             loadedPosts.push({ ...postData, key: doc.id });
           });
           setPosts(loadedPosts);
@@ -141,15 +163,16 @@ const Dashboard = () => {
   const filteredPosts = posts
     .filter(post => {
       const matchesCategory = selectedCategory === 'Home' || post.category === selectedCategory;
-      const matchesSearch = searchQuery === '' || 
+      const matchesSearch = searchQuery === '' ||
         post.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         post.plainText?.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesCategory && matchesSearch;
     })
     .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
+  // Trending now based on viewsCount
   const trendingPosts = posts
-    .sort((a, b) => (b.views || 0) - (a.views || 0))
+    .sort((a, b) => (b.viewsCount || 0) - (a.viewsCount || 0))
     .slice(0, 5);
 
   return (
@@ -242,10 +265,10 @@ const Dashboard = () => {
                 </div>
               ) : (
                 filteredPosts.map(post => (
+                  // Note: No handleView call here. Views increment in view.jsx.
                   <div
                     key={post.key}
                     className="post-card"
-                    onClick={() => handleView(post.key)}
                   >
                     <div className="card-body p-0">
                       <div className="d-flex justify-content-between align-items-center mb-3">
@@ -267,17 +290,20 @@ const Dashboard = () => {
                       <p className="text-muted mb-3">{post.plainText}</p>
                       <div className="post-stats">
                         <span
-                          onClick={() => handleLike(post.key)}
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            handleLike(post.key); 
+                          }}
                           style={{
                             cursor: 'pointer',
                             marginRight: '8px',
-                            color: post.likes?.includes(userId) ? 'blue' : 'black'
+                            color: post.userLikes?.includes(userId) ? 'blue' : 'black'
                           }}
                         >
-                          👍 {post.likes?.length || 0}
+                          👍 {post.likesCount || 0}
                         </span>
                         <span>💬 {(post.comments || 1) - 1}</span>
-                        <span>👁️ {post.views || 0}</span>
+                        <span>👁️ {post.viewsCount || 0}</span>
                       </div>
                     </div>
                   </div>
@@ -304,7 +330,7 @@ const Dashboard = () => {
                         {getCategoryLabel(post.category)}
                       </span>
                       <small className="text-muted">
-                        👁️ {post.views || 0}
+                        👁️ {post.viewsCount || 0}
                       </small>
                     </div>
                   </div>

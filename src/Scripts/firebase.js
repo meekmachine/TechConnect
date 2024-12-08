@@ -15,7 +15,8 @@ import {
   serverTimestamp,
   addDoc,
   deleteDoc,
-  runTransaction
+  runTransaction,
+  increment
 } from "firebase/firestore";
 import {
   GoogleAuthProvider,
@@ -46,7 +47,7 @@ const handleUploadError = (error, onError) => {
 
 /**
  * Cloud Storage
- * Uploads files to Firebase storage with progress tracking and error handling.
+ * Upload files to Firebase storage with progress tracking and error handling.
  */
 export const uploadToStorage = (
   storagePath,
@@ -73,19 +74,10 @@ export const uploadToStorage = (
 };
 
 /**
- * User Authentication and Profile Helpers
+ * Authentication Helpers
  */
+export const getUserId = () => auth?.currentUser?.uid || null;
 export const getUserName = () => auth?.currentUser?.displayName || "Unknown";
-
-export const getProfilePicUrl = () => auth?.currentUser?.photoURL || "/images/profile_placeholder.png";
-
-export const profilePicStyle = (url, style = {}) => {
-  if (!url) return undefined;
-  if (url.includes("googleusercontent.com") && !url.includes("?")) {
-    url += "?sz=150";
-  }
-  return { ...style, backgroundImage: `url(${url})` };
-};
 
 export const signIn = () => {
   const provider = new GoogleAuthProvider();
@@ -106,6 +98,16 @@ export const signOut = () => {
     .catch((error) => {
       console.error("Error signing out: ", error);
     });
+};
+
+export const getProfilePicUrl = () => auth?.currentUser?.photoURL || "/images/profile_placeholder.png";
+
+export const profilePicStyle = (url, style = {}) => {
+  if (!url) return undefined;
+  if (url.includes("googleusercontent.com") && !url.includes("?")) {
+    url += "?sz=150";
+  }
+  return { ...style, backgroundImage: `url(${url})` };
 };
 
 export const getServerTimestamp = () => serverTimestamp();
@@ -132,6 +134,7 @@ export const postQuerySnapshot = async (onSnapshot) => {
 
 /**
  * Save or update a post document.
+ * If post_key is null, a new document is created; otherwise, it updates the existing doc.
  */
 export const setPostReference = async (post_key = null, data_post, onSetDocument = () => {}) => {
   try {
@@ -158,16 +161,12 @@ export const setPostReference = async (post_key = null, data_post, onSetDocument
 
 /**
  * Increment the view count for a post.
+ * Call this in view.jsx when the post is actually viewed.
  */
 export const incrementViewCount = async (postId) => {
   const postRef = doc(fire_posts, postId);
   try {
-    await runTransaction(db, async (transaction) => {
-      const postDoc = await transaction.get(postRef);
-      if (!postDoc.exists()) throw "Post does not exist";
-      const currentViews = postDoc.data().views || 0;
-      transaction.update(postRef, { views: currentViews + 1 });
-    });
+    await updateDoc(postRef, { viewsCount: increment(1) });
   } catch (error) {
     console.error("Error incrementing view count:", error);
   }
@@ -175,32 +174,39 @@ export const incrementViewCount = async (postId) => {
 
 /**
  * Toggle like for a post by the current user.
- * If the user already liked the post, remove the like.
- * If not, add the like.
+ * - If the user hasn't liked the post yet, add their UID to userLikes and increment likesCount.
+ * - If the user has liked it, remove their UID and decrement likesCount.
  */
 export const toggleLike = async (postId, userId) => {
+  if (!userId) throw new Error("No user ID provided for toggling like.");
+
   const postRef = doc(fire_posts, postId);
   try {
-    const updatedUserLikes = await runTransaction(db, async (transaction) => {
+    await runTransaction(db, async (transaction) => {
       const postDoc = await transaction.get(postRef);
       if (!postDoc.exists()) throw "Post does not exist";
 
       const postData = postDoc.data();
       const userLikes = postData.userLikes || [];
+      const likesCount = postData.likesCount || 0;
+
       const userIndex = userLikes.indexOf(userId);
-
       if (userIndex > -1) {
-        // User already liked, remove the like
+        // User already liked; remove like
         userLikes.splice(userIndex, 1);
+        transaction.update(postRef, {
+          userLikes,
+          likesCount: Math.max(likesCount - 1, 0)
+        });
       } else {
-        // Add the userId to likes
+        // User hasn't liked; add like
         userLikes.push(userId);
+        transaction.update(postRef, {
+          userLikes,
+          likesCount: likesCount + 1
+        });
       }
-
-      transaction.update(postRef, { userLikes });
-      return userLikes;
     });
-    return updatedUserLikes;
   } catch (error) {
     console.error("Error toggling like:", error);
     throw error;
