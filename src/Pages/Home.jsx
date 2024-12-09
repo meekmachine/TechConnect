@@ -34,7 +34,7 @@ const Home = () => {
           <Carousel.Caption className="text-white text-start">
             <h1 className="roboto-condensed">Expand Your Skills</h1>
             <p>Discover new trends in the tech world.</p>
-            <Button href="/learn" variant="primary">
+            <Button href="/about-us" variant="primary">
               Learn More
             </Button>
           </Carousel.Caption>
@@ -73,7 +73,7 @@ const Home = () => {
               Discover real-time job market trends and the most in-demand
               skills.
             </p>
-            <Button variant="warning" className="mt-3">
+            <Button href="/TechConnect/login" variant="warning" className="mt-3">
               Join Now
             </Button>
           </div>
@@ -85,7 +85,7 @@ const Home = () => {
               At TechConnect, protecting your privacy is our top priority. We
               safeguard your data with advanced security measures.
             </p>
-            <Link to="/privacy" className="btn btn-link">
+            <Link to="/privacy-policy" className="btn btn-link">
               Learn More
             </Link>
             <img
